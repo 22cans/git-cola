@@ -144,6 +144,16 @@ class StatusTreeWidget(QtWidgets.QTreeWidget):
             cmds.run(cmds.LaunchDifftool), hotkeys.DIFF)
         self.launch_difftool_action.setIcon(icons.diff())
 
+        self.resolve_theirs = qtutils.add_action(
+            self, cmds.ResolveTheirs.name(),
+            cmds.run(cmds.ResolveTheirs), hotkeys.RESOLVE_THEIRS)
+        self.resolve_theirs.setIcon(icons.copy())
+        
+        self.resolve_ours = qtutils.add_action(
+            self, cmds.ResolveOurs.name(),
+            cmds.run(cmds.ResolveOurs), hotkeys.RESOLVE_OURS)
+        self.resolve_ours.setIcon(icons.copy())
+
         self.launch_editor_action = qtutils.add_action(
             self, cmds.LaunchEditor.name(),
             cmds.run(cmds.LaunchEditor), hotkeys.EDIT, *hotkeys.ACCEPT)
