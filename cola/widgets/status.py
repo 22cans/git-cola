@@ -578,6 +578,10 @@ class StatusTreeWidget(QtWidgets.QTreeWidget):
     def _create_unmerged_context_menu(self, menu, s):
         menu.addAction(self.launch_difftool_action)
 
+        resolve_menu = menu.addMenu(icons.question(), N_('Resolve'))
+        resolve_menu.addAction(self.resolve_theirs)
+        resolve_menu.addAction(self.resolve_ours)
+
         action = menu.addAction(icons.add(), N_('Stage Selected'),
                                 cmds.run(cmds.Stage, self.unstaged()))
         action.setShortcut(hotkeys.STAGE_SELECTION)

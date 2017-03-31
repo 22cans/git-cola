@@ -857,6 +857,39 @@ class FormatPatch(Command):
         Interaction.log_status(status, out, err)
 
 
+def DoResolve(s, _type):
+    if s.unmerged:
+        git = main.model().git
+        for file in s.unmerged:
+            Interaction.log('Resolve' + _type + ': ' + file)
+            git.checkout('--'+_type, '--', file)
+            git.add(file)
+        do(Refresh)
+    else:
+        difftool_run()
+
+class ResolveTheirs(Command):
+    @staticmethod
+    def name():
+        return N_('Take Theirs')
+
+    def __init__(self):
+        BaseCommand.__init__(self)
+
+    def do(self):
+        DoResolve(selection.selection(), 'theirs')
+
+class ResolveOurs(Command):
+    @staticmethod
+    def name():
+        return N_('Take Ours')
+
+    def __init__(self):
+        BaseCommand.__init__(self)
+
+    def do(self):
+        DoResolve(selection.selection(), 'ours')
+
 class LaunchDifftool(BaseCommand):
 
     @staticmethod

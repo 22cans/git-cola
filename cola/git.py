@@ -314,6 +314,9 @@ class Git(object):
         opt_args = self.transform_kwargs(**kwargs)
         call = git_args + opt_args
         call.extend(args)
+
+        #Interaction.log('  git ' + dashify(cmd) + ' ' + ' '.join(opt_args) + ' ' + ' '.join(args) + ' {' + str(_kwargs) + '}')
+
         try:
             return self.execute(call, **_kwargs)
         except OSError as e:
