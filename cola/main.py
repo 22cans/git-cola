@@ -288,6 +288,8 @@ def cmd_cola(args):
     if status_filter:
         view.set_filter(core.relpath(status_filter))
 
+    view.git_dag()
+
     return application_start(context, view)
 
 
