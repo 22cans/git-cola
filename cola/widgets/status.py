@@ -21,6 +21,7 @@ from . import common
 from . import completion
 from . import defs
 
+import os
 
 class StatusWidget(QtWidgets.QWidget):
     """
@@ -33,6 +34,9 @@ class StatusWidget(QtWidgets.QWidget):
 
     def __init__(self, titlebar, parent=None):
         QtWidgets.QWidget.__init__(self, parent)
+
+        self.tree_toggle = qtutils.checkbox('Tree', 'Show files in Tree view\ninstead of flat')
+        self.tree_toggle.clicked.connect(self._clicked_tree_toggle)
 
         tooltip = N_('Toggle the paths filter')
         icon = icons.ellipsis()
@@ -51,8 +55,14 @@ class StatusWidget(QtWidgets.QWidget):
                                                 self.toggle_filter,
                                                 hotkeys.FILTER)
 
+        titlebar.add_corner_widget(self.tree_toggle)
         titlebar.add_corner_widget(self.filter_button)
         qtutils.connect_button(self.filter_button, self.toggle_filter)
+
+    def _clicked_tree_toggle(self):
+        self.tree.showTree = not self.tree.showTree;
+        cmds.do(cmds.Refresh)
+        self.refresh()
 
     def toggle_filter(self):
         shown = not self.filter_widget.isVisible()
@@ -70,6 +80,7 @@ class StatusWidget(QtWidgets.QWidget):
         self.setMaximumWidth(2 ** 13)
 
     def refresh(self):
+        self.tree.refresh()
         self.tree.show_selection()
 
     def set_filter(self, txt):
@@ -110,7 +121,7 @@ class StatusTreeWidget(QtWidgets.QTreeWidget):
         self.setUniformRowHeights(True)
         self.setAnimated(True)
         self.setRootIsDecorated(False)
-        self.setIndentation(0)
+        #self.setIndentation(0)
         self.setDragEnabled(True)
         self.setAutoScroll(False)
 
@@ -191,6 +202,10 @@ class StatusTreeWidget(QtWidgets.QTreeWidget):
 
         self.view_blame_action = qtutils.add_action(
             self, N_('Blame...'), self.view_blame, hotkeys.BLAME)
+
+        self.folders = { 0 : {}, 1 : {}, 2 : {}, 3 : {} }
+        self.showTree = False
+
 
         # MoveToTrash and Delete use the same shortcut.
         # We will only bind one of them, depending on whether or not the
@@ -411,6 +426,7 @@ class StatusTreeWidget(QtWidgets.QTreeWidget):
         self.old_current_item = self.current_item()
 
     def refresh(self):
+        self.folders = { 0 : {}, 1 : {}, 2 : {}, 3 : {} }
         self.set_staged(self.m.staged)
         self.set_modified(self.m.modified)
         self.set_unmerged(self.m.unmerged)
@@ -444,6 +460,27 @@ class StatusTreeWidget(QtWidgets.QTreeWidget):
         """Adds items to the 'Untracked' subtree."""
         self._set_subtree(items, self.idx_untracked, untracked=True)
 
+    def _get_folder(self, folder, _type, parent, deleted):
+        if not folder in self.folders[_type]:
+            ti = qtutils.create_treefolderitem(folder, deleted)
+            parent.addChild(ti)
+            self.folders[_type][folder] = ti
+        return self.folders[_type][folder]
+
+    def _get_folderitem(self, parent, _type, name, deleted):
+        path = name
+        comps = []
+        while True:
+            path, leaf = os.path.split(path)
+            if (leaf):
+                comps.append(leaf)
+            else:
+                break;
+        root = parent
+        for i in range(len(comps)-1, 0, -1):
+            root = self._get_folder(comps[i], _type, root, deleted)
+        return comps[0], root
+
     def _set_subtree(self, items, idx,
                      staged=False,
                      untracked=False,
@@ -461,11 +498,21 @@ class StatusTreeWidget(QtWidgets.QTreeWidget):
 
         for item in items:
             deleted = (deleted_set is not None and item in deleted_set)
-            treeitem = qtutils.create_treeitem(item,
-                                               staged=staged,
-                                               deleted=deleted,
-                                               untracked=untracked)
-            parent.addChild(treeitem)
+
+            if self.showTree:
+                file, parent = self._get_folderitem(parent, idx, item, deleted)
+
+                ti = qtutils.create_treeitem(file, staged=staged,deleted=deleted,untracked=untracked)
+                parent.addChild(ti)
+
+                self.expandAll()
+            else:
+                treeitem = qtutils.create_treeitem(item,
+                                                   staged=staged,
+                                                   deleted=deleted,
+                                                   untracked=untracked)
+                parent.addChild(treeitem)
+
         self.expand_items(idx, items)
         self.blockSignals(False)
 
@@ -686,6 +733,9 @@ class StatusTreeWidget(QtWidgets.QTreeWidget):
 
     def selected_indexes(self):
         """Returns a list of (category, row) representing the tree selection."""
+        if (self.showTree):
+            return []
+
         selected = self.selectedIndexes()
         result = []
         for idx in selected:
@@ -794,6 +844,8 @@ class StatusTreeWidget(QtWidgets.QTreeWidget):
 
     def _subtree_selection_items(self, idx):
         item = self.topLevelItem(idx)
+        if self.showTree:
+            return []
         return qtutils.tree_selection_items(item)
 
     def double_clicked(self, item, idx):
