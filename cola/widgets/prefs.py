@@ -163,6 +163,7 @@ class SettingsFormWidget(FormWidget):
         self.linebreak = qtutils.checkbox()
         self.minimize_pushpull = qtutils.checkbox()
         self.status_actions = qtutils.checkbox()
+        self.tabbed_views = qtutils.checkbox()
         self.editor = QtWidgets.QLineEdit()
         self.historybrowser = QtWidgets.QLineEdit()
         self.blameviewer = QtWidgets.QLineEdit()
@@ -181,6 +182,7 @@ class SettingsFormWidget(FormWidget):
         self.add_row(N_('Auto-Wrap Lines'), self.linebreak)
         self.add_row(N_('Minimize push/pull'), self.minimize_pushpull)
         self.add_row(N_('Status Actions'), self.status_actions)
+        self.add_row(N_('Tabbed Views'), self.tabbed_views)
         self.add_row(N_('Editor'), self.editor)
         self.add_row(N_('History Browser'), self.historybrowser)
         self.add_row(N_('Blame Viewer'), self.blameviewer)
@@ -200,6 +202,7 @@ class SettingsFormWidget(FormWidget):
             prefs.LINEBREAK: (self.linebreak, True),
             prefs.MINIMIZE_PUSHPULL: (self.minimize_pushpull, True),
             prefs.STATUS_ACTIONS: (self.status_actions, True),
+            prefs.TABBED_VIEWS: (self.tabbed_views, True),
             prefs.SORT_BOOKMARKS: (self.sort_bookmarks, True),
             prefs.BOLD_HEADERS: (self.bold_headers, False),
             prefs.DIFFTOOL: (self.difftool, 'xxdiff'),

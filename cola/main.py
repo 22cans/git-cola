@@ -273,22 +273,76 @@ def add_version_command(subparser):
                         help='print the version number only')
 
 
+from .widgets import standard
+class ContainerView(standard.MainWindow):
+    def __init__(self, model, args, settings, parent=None):
+        from .i18n import N_
+        from .widgets.main import MainView
+        from .widgets.dag import GitDAG
+        from .models import dag
+        from .widgets.browse import Browser
+        from .widgets.dag import git_dag
+        from .models.browse import GitRepoModel
+
+        from qtpy import QtCore
+        from qtpy import QtGui
+        from qtpy import QtWidgets
+        from qtpy.QtCore import Qt
+        from qtpy.QtCore import Signal
+        from . import qtutils
+        from .widgets import defs
+
+        standard.MainWindow.__init__(self, parent)
+
+        self.setMinimumSize(600, 400)
+
+        # Main view
+        self.main_view = MainView(model, settings)
+
+        # DAG view
+        self.dag_view = git_dag(model)
+
+        # File view
+        self.file_view = Browser(parent, settings=settings)
+        self.file_view.set_model(GitRepoModel(self.file_view.tree))
+
+        # Tab bar
+        self.tabs = QtWidgets.QTabWidget()
+        self.tabs.addTab(self.main_view, N_('Main'))
+        self.tabs.addTab(self.dag_view, N_('DAG'))
+        self.tabs.addTab(self.file_view, N_('Files'))
+
+        self.setCentralWidget(self.tabs)
+        self.main_view.refresh()
+        self.setWindowTitle(self.main_view.windowTitle())
+        self.resize(self.main_view.frameSize())
+        self.move(self.main_view.pos())
+
+
 # entry points
 def cmd_cola(args):
     from .widgets.main import MainView
+    from .models import prefs
+
     status_filter = args.status_filter
     if status_filter:
         status_filter = core.abspath(status_filter)
 
     context = application_init(args)
-    view = MainView(context.model, settings=args.settings)
+
+    isTabbed = prefs.tabbed_views()
+    if isTabbed:
+        view = ContainerView(context.model, args, settings=args.settings)
+        main_view = view.main_view
+    else:
+        view = MainView(context.model, settings=args.settings)
+        main_view = view
+
     if args.amend:
         cmds.do(cmds.AmendMode, True)
 
     if status_filter:
-        view.set_filter(core.relpath(status_filter))
-
-    view.git_dag()
+        main_view.set_filter(core.relpath(status_filter))
 
     return application_start(context, view)
 

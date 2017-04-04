@@ -21,6 +21,7 @@ HISTORY_BROWSER = 'gui.historybrowser'
 LINEBREAK = 'cola.linebreak'
 MINIMIZE_PUSHPULL = 'cola.minimizepushpull'
 STATUS_ACTIONS = 'cola.statusactions'
+TABBED_VIEWS = 'cola.tabbedviews'
 MERGE_DIFFSTAT = 'merge.diffstat'
 MERGE_KEEPBACKUP = 'merge.keepbackup'
 MERGE_SUMMARY = 'merge.summary'
@@ -94,6 +95,9 @@ def minimize_pushpull():
 
 def status_actions():
     return gitcfg.current().get(STATUS_ACTIONS, True)
+
+def tabbed_views():
+    return gitcfg.current().get(TABBED_VIEWS, True)
 
 def spellcheck():
     return gitcfg.current().get(SPELL_CHECK, False)
