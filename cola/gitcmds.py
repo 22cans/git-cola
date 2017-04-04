@@ -401,6 +401,10 @@ def extract_diff_header(status, deleted,
             start = True
         if start or (deleted and del_tag in line):
             output.write(line + '\n')
+        elif 'Binary files ' in line and 'differ' in line:
+            output.write('Binary files differ\n')
+        elif 'old mode' in line[:8] or 'new mode' in line[:8]:
+            output.write(line + '\n')
         else:
             if with_diff_header:
                 headers.append(line)
