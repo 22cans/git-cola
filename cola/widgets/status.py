@@ -20,6 +20,11 @@ from .. import utils
 from . import common
 from . import completion
 from . import defs
+from ..widgets import remote
+from ..widgets import stash
+from ..qtutils import create_button
+from ..qtutils import connect_button
+from ..models.selection import selection_model
 
 import os
 
@@ -55,9 +60,47 @@ class StatusWidget(QtWidgets.QWidget):
                                                 self.toggle_filter,
                                                 hotkeys.FILTER)
 
-        titlebar.add_corner_widget(self.tree_toggle)
+
+        if prefs.status_actions():
+            self.stage_button = self._add_corner_button(titlebar, N_('Stage'), self.stage)
+            self.unstage_button = self._add_corner_button(titlebar, N_('Unstage'), self.unstage)
+            self.refresh_button = self._add_corner_button(titlebar, N_('Refresh'), cmds.run(cmds.Refresh))
+            self.fetch_button = self._add_corner_button(titlebar, N_('Fetch...'), remote.fetch)
+            self.push_button = self._add_corner_button(titlebar, N_('Push...'), remote.push)
+            self.pull_button = self._add_corner_button(titlebar, N_('Pull...'), remote.pull)
+            self.stash_button = self._add_corner_button(titlebar, N_('Stash...'), stash.stash)
+
+        #titlebar.add_corner_widget(self.tree_toggle)
         titlebar.add_corner_widget(self.filter_button)
         qtutils.connect_button(self.filter_button, self.toggle_filter)
+
+    def _add_corner_button(self, titlebar, label, run = None):
+        btn = create_button(label)
+        font = btn.font()
+        font.setPointSize(8)
+        btn.setFont(font)
+        btn.setContentsMargins(2,2,2,2)
+        btn.setMaximumWidth(48)
+        btn.setMaximumHeight(16)
+        titlebar.add_corner_widget(btn)
+        connect_button(btn, run)
+        return btn
+
+    def stage(self):
+        """Stage selected files, or all files if no selection exists."""
+        paths = selection_model().unstaged
+        if not paths:
+            cmds.do(cmds.StageModified)
+        else:
+            cmds.do(cmds.Stage, paths)
+
+    def unstage(self):
+        """Unstage selected files, or all files if no selection exists."""
+        paths = selection_model().staged
+        if not paths:
+            cmds.do(cmds.UnstageAll)
+        else:
+            cmds.do(cmds.Unstage, paths)
 
     def _clicked_tree_toggle(self):
         self.tree.showTree = not self.tree.showTree;

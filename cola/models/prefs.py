@@ -20,6 +20,7 @@ FONTDIFF = 'cola.fontdiff'
 HISTORY_BROWSER = 'gui.historybrowser'
 LINEBREAK = 'cola.linebreak'
 MINIMIZE_PUSHPULL = 'cola.minimizepushpull'
+STATUS_ACTIONS = 'cola.statusactions'
 MERGE_DIFFSTAT = 'merge.diffstat'
 MERGE_KEEPBACKUP = 'merge.keepbackup'
 MERGE_SUMMARY = 'merge.summary'
@@ -90,6 +91,9 @@ def linebreak():
 
 def minimize_pushpull():
     return gitcfg.current().get(MINIMIZE_PUSHPULL, True)
+
+def status_actions():
+    return gitcfg.current().get(STATUS_ACTIONS, True)
 
 def spellcheck():
     return gitcfg.current().get(SPELL_CHECK, False)
