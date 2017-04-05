@@ -1,6 +1,6 @@
 #!/bin/sh
 # Setup PATH for git-osx-installer and other common locations
-PATH="$PATH":/usr/local/bin:/usr/local/git/bin
+PATH=/usr/local/bin:/usr/local/git/bin:"$PATH"
 export PATH
 
 # $0 = Contents/MacOS/git-cola

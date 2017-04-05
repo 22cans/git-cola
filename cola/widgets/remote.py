@@ -17,6 +17,8 @@ from .. import utils
 from .standard import ProgressDialog
 from . import defs
 from . import standard
+from .. import core
+from ..models import prefs
 
 
 FETCH = 'FETCH'
@@ -122,6 +124,18 @@ class RemoteActionDialog(standard.Dialog):
         self.filtered_remote_branches = []
         self.selected_remotes = []
 
+        self.minimize_button = prefs.minimize_pushpull()
+        if self.minimize_button:
+            adv_tooltip = N_('Toggle advanced options')
+            adv_icon = icons.ellipsis()
+            self.advanced_button = qtutils.create_action_button(tooltip=adv_tooltip,
+                                                              icon=adv_icon)
+            qtutils.connect_button(self.advanced_button, self.toggle_advanced)
+        else:
+            self.advanced_button = QtWidgets.QLabel()
+            self.advanced_button.setText('')
+
+
         self.setWindowTitle(title)
         if parent is not None:
             self.setWindowModality(Qt.WindowModal)
@@ -222,6 +236,8 @@ class RemoteActionDialog(standard.Dialog):
             defs.no_margin, defs.button_spacing,
             self.close_button,
             qtutils.STRETCH,
+            self.advanced_button,
+            qtutils.STRETCH,
             self.force_checkbox,
             self.ff_only_checkbox,
             self.no_ff_checkbox,
@@ -318,6 +334,27 @@ class RemoteActionDialog(standard.Dialog):
             self.ff_only_checkbox.hide()
 
         self.init_size(parent=parent)
+        if self.minimize_button:
+            self.set_advanced(False)
+
+
+    def toggle_advanced(self):
+        shown = not self.remote_branches.isVisible()
+        self.set_advanced(shown)
+        self.advanced_button.setEnabled(False)
+
+    def set_advanced(self, shown):
+        self.local_branches.setVisible(shown and self.action != PULL)
+        self.remote_branches.setVisible(shown)
+        self.remotes.setVisible(shown)
+        self.local_branch.setReadOnly(not shown)
+        self.remote_branch.setReadOnly(not shown)
+        self.remote_name.setReadOnly(not shown)
+        width = defs.dialog_w
+        height = defs.dialog_h
+        if not shown: height = defs.dialog_h_min
+        self.resize(width, height)
+
 
     def set_rebase(self, value):
         """Check the rebase checkbox"""

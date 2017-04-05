@@ -591,6 +591,8 @@ def create_treeitem(filename, staged=False, deleted=False, untracked=False):
     return TreeWidgetItem(filename, icons.name_from_basename(icon_name),
                           deleted=deleted)
 
+def create_treefolderitem(filename, deleted=False):
+    return TreeWidgetItem(filename, icons.folder(), deleted=deleted)
 
 def add_close_action(widget):
     """Adds close action and shortcuts to a widget."""

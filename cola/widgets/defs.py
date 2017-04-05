@@ -41,4 +41,5 @@ radio_border = max(1, scale(1.0 - (1.0 / math.pi)))
 separator = scale(3)
 
 dialog_w = scale(720)
-dialog_h = scale(445)
+dialog_h = scale(245)
+dialog_h_min = scale(30)
