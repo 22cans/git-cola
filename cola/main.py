@@ -275,7 +275,7 @@ def add_version_command(subparser):
 
 from .widgets import standard
 class ContainerView(standard.MainWindow):
-    def __init__(self, model, args, settings, parent=None):
+    def __init__(self, model, args, parent=None):
         from .i18n import N_
         from .widgets.main import MainView
         from .widgets.dag import GitDAG
@@ -297,13 +297,13 @@ class ContainerView(standard.MainWindow):
         self.setMinimumSize(600, 400)
 
         # Main view
-        self.main_view = MainView(model, settings)
+        self.main_view = MainView(model, settings=args.settings)
 
         # DAG view
         self.dag_view = git_dag(model)
 
         # File view
-        self.file_view = Browser(parent, settings=settings)
+        self.file_view = Browser(parent, settings=args.settings)
         self.file_view.set_model(GitRepoModel(self.file_view.tree))
 
         # Tab bar
@@ -312,11 +312,20 @@ class ContainerView(standard.MainWindow):
         self.tabs.addTab(self.dag_view, N_('DAG'))
         self.tabs.addTab(self.file_view, N_('Files'))
 
+        self.init_state(args.settings, self.resize, 600, 400)
         self.setCentralWidget(self.tabs)
-        self.main_view.refresh()
-        self.setWindowTitle(self.main_view.windowTitle())
-        self.resize(self.main_view.frameSize())
-        self.move(self.main_view.pos())
+        self.main_view.link_parent(self)
+
+    def apply_state(self, state):
+        result = standard.MainWindow.apply_state(self, state)
+        if 'main_view' in state:
+            self.main_view.apply_state(state['main_view'])
+        return result
+
+    def export_state(self):
+        state = standard.MainWindow.export_state(self)
+        state['main_view'] = self.main_view.export_state()
+        return state
 
 
 # entry points
@@ -329,10 +338,9 @@ def cmd_cola(args):
         status_filter = core.abspath(status_filter)
 
     context = application_init(args)
-
     isTabbed = prefs.tabbed_views()
     if isTabbed:
-        view = ContainerView(context.model, args, settings=args.settings)
+        view = ContainerView(context.model, args)
         main_view = view.main_view
     else:
         view = MainView(context.model, settings=args.settings)
