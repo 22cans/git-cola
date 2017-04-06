@@ -275,6 +275,9 @@ class Git(object):
         types_to_stringify = set((ustr, float, str) + int_types)
 
         for k, v in kwargs.items():
+            if k is 'post_refresh':
+                continue
+
             if len(k) == 1:
                 dashes = '-'
                 join = ''
@@ -288,6 +291,11 @@ class Git(object):
                 args.append('%s%s%s%s' % (dashes, dashify(k), join, v))
 
         return args
+
+    def refresh_required(self):
+        ret = self._refresh_required
+        self._refresh_required = False
+        return ret
 
     def git(self, cmd, *args, **kwargs):
         # Handle optional arguments prior to calling transform_kwargs
@@ -318,7 +326,10 @@ class Git(object):
         #Interaction.log('  git ' + dashify(cmd) + ' ' + ' '.join(opt_args) + ' ' + ' '.join(args) + ' {' + str(_kwargs) + '}')
 
         try:
-            return self.execute(call, **_kwargs)
+            status, out, err = self.execute(call, **_kwargs)
+            if 'post_refresh' in kwargs:
+                self._refresh_required = True
+            return (status, out, err)
         except OSError as e:
             if e.errno != errno.ENOENT:
                 raise e

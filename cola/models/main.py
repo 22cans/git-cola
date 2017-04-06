@@ -417,10 +417,12 @@ class MainModel(Observable):
     def push(self, remote, remote_branch='', local_branch='', **opts):
         # Swap the branches in push mode (reverse of fetch)
         opts.update(dict(local_branch=remote_branch,
-                         remote_branch=local_branch))
+                         remote_branch=local_branch,
+                         post_refresh=True))
         return run_remote_action(self.git.push, remote, push=True, **opts)
 
     def pull(self, remote, **opts):
+        opts.update(dict(post_refresh=True))
         return run_remote_action(self.git.pull, remote, pull=True, **opts)
 
     def create_branch(self, name, base, track=False, force=False):
@@ -517,6 +519,7 @@ def remote_args(remote,
                 rebase=False,
                 pull=False,
                 push=False,
+                post_refresh=False,
                 set_upstream=False):
     """Return arguments for git fetch/push/pull"""
 
@@ -542,6 +545,7 @@ def remote_args(remote,
         kwargs['set_upstream'] = True
     if tags:
         kwargs['tags'] = True
+    kwargs['post_refresh'] = post_refresh
 
     return (args, kwargs)
 
