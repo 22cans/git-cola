@@ -54,7 +54,10 @@ from . import search
 from . import standard
 from . import status
 from . import stash
-
+from .dag import CommitTreeWidget
+from .dag import ReaderThread
+from ..models import dag
+from .. import observable
 
 class MainView(standard.MainWindow):
     config_actions_changed = Signal(object)
@@ -68,6 +71,7 @@ class MainView(standard.MainWindow):
         self.model = model
         self.settings = settings
         self.prefs_model = prefs_model = prefs.PreferencesModel()
+        self.parent_link = None
 
         # The widget version is used by import/export_state().
         # Change this whenever dockwidgets are removed.
@@ -149,6 +153,17 @@ class MainView(standard.MainWindow):
         self.diffeditorwidget = diff.DiffEditorWidget(self.diffdockwidget)
         self.diffeditor = self.diffeditorwidget.editor
         self.diffdockwidget.setWidget(self.diffeditorwidget)
+
+        # Log widget
+        self.notifier = notifier = observable.Observable()
+        self.notifier.refs_updated = refs_updated = 'refs_updated'
+        self.notifier.add_observer(refs_updated, self.display)
+        #self.notifier.add_observer(filelist.HISTORIES_SELECTED, self.histories_selected)
+        #self.notifier.add_observer(filelist.DIFFTOOL_SELECTED, self.difftool_selected)
+        #self.notifier.add_observer(diff.COMMITS_SELECTED, self.commits_selected)
+        self.treewidget = CommitTreeWidget(notifier, self)
+        self.log_dock = qtutils.create_dock(N_('Log'), self, stretch=False)
+        self.log_dock.setWidget(self.treewidget)
 
         # All Actions
         add_action = qtutils.add_action
@@ -492,6 +507,7 @@ class MainView(standard.MainWindow):
             self.addDockWidget(left, self.browserdockwidget)
             self.tabifyDockWidget(self.browserdockwidget, self.commitdockwidget)
         self.addDockWidget(left, self.diffdockwidget)
+        self.addDockWidget(left, self.log_dock)
         self.addDockWidget(right, self.statusdockwidget)
         self.addDockWidget(right, self.bookmarksdockwidget)
         self.addDockWidget(right, self.branchdockwidget)
@@ -538,6 +554,56 @@ class MainView(standard.MainWindow):
                         N_('git cola version %s') % version.version())
         # Focus the status widget; this must be deferred
         QtCore.QTimer.singleShot(0, lambda: self.statuswidget.setFocus())
+
+        _branch = model.currentbranch
+        # disambiguate between branch names and filenames by using '--'
+        branch_doubledash = _branch and (_branch + ' --') or ''
+        ctx = dag.DAG(branch_doubledash, 1000)
+        #ctx.set_arguments(args)
+
+        self.commits = {}
+        self.commit_list = []
+        self.thread = None
+        self.set_context(ctx)
+
+    def set_context(self, ctx):
+        self.ctx = ctx
+
+        # Update fields affected by model
+        #self.revtext.setText(ctx.ref)
+        #self.maxresults.setValue(ctx.count)
+        #self.update_window_title()
+
+        if self.thread is not None:
+            self.thread.stop()
+        self.thread = ReaderThread(ctx, self)
+
+        thread = self.thread
+        thread.begin.connect(self.thread_begin, type=Qt.QueuedConnection)
+        thread.status.connect(self.thread_status, type=Qt.QueuedConnection)
+        thread.add.connect(self.add_commits, type=Qt.QueuedConnection)
+        thread.end.connect(self.thread_end, type=Qt.QueuedConnection)
+        self.thread.start()
+
+    def display(self):
+        self.thread.stop()
+        self.thread.start()
+
+    def thread_begin(self):
+        return
+    def thread_end(self):
+        return
+    def thread_status(self, successful):
+        return
+    def add_commits(self, commits):
+        self.commit_list.extend(commits)
+        # Keep track of commits
+        for commit_obj in commits:
+            self.commits[commit_obj.oid] = commit_obj
+            for tag in commit_obj.tags:
+                self.commits[tag] = commit_obj
+        #self.graphview.add_commits(commits)
+        self.treewidget.add_commits(commits)
 
     def set_initial_size(self):
         self.resize(987, 610)
@@ -616,6 +682,9 @@ class MainView(standard.MainWindow):
             if shortcut:
                 action.setShortcut(shortcut)
 
+    def link_parent(self, _parent):
+        self.parent_link = _parent
+
     def refresh(self):
         """Update the title with the current branch and directory name."""
         alerts = []
@@ -659,6 +728,11 @@ class MainView(standard.MainWindow):
         self.commitdockwidget.setToolTip(msg)
         self.commitmsgeditor.set_mode(self.mode)
         self.update_actions()
+
+        if self.parent_link is not None:
+            self.parent_link.setWindowTitle(title)
+
+        self.display()
 
     def update_actions(self):
         is_rebasing = self.model.is_rebasing
@@ -709,6 +783,7 @@ class MainView(standard.MainWindow):
             (optkey + '+5', self.bookmarksdockwidget),
             (optkey + '+6', self.recentdockwidget),
             (optkey + '+7', self.branchdockwidget),
+            (optkey + '+8', self.log_dock),
         )
         for shortcut, dockwidget in dockwidgets:
             # Associate the action with the shortcut

@@ -260,6 +260,14 @@ class ColaQApplication(QtWidgets.QApplication):
     def __init__(self, argv):
         super(ColaQApplication, self).__init__(argv)
         self.view = None  # injected by application_start()
+        self.timer500ms = QtCore.QTimer()
+        self.timer500ms.timeout.connect(self.timerFn500ms)
+        self.timer500ms.start(500)
+
+    def timerFn500ms(self):
+        from . import git
+        if git.current().refresh_required():
+            cmds.do(cmds.Refresh)
 
     def event(self, e):
         if e.type() == QtCore.QEvent.ApplicationActivate:
