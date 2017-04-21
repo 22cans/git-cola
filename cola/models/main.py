@@ -520,7 +520,8 @@ def remote_args(remote,
                 pull=False,
                 push=False,
                 post_refresh=False,
-                set_upstream=False):
+                set_upstream=False,
+                prune=False):
     """Return arguments for git fetch/push/pull"""
 
     args = [remote]
@@ -545,6 +546,8 @@ def remote_args(remote,
         kwargs['set_upstream'] = True
     if tags:
         kwargs['tags'] = True
+    if prune:
+        kwargs['prune'] = True
     kwargs['post_refresh'] = post_refresh
 
     return (args, kwargs)
