@@ -217,8 +217,9 @@ class RepoTreeView(standard.TreeView):
         model.update_entry(path)
 
         for row in range(item.rowCount()):
-            path = item.child(row, 0).path
-            model.update_entry(path)
+            if item.child(row, 0) != None:
+                path = item.child(row, 0).path
+                model.update_entry(path)
 
         item.cached = True
 
