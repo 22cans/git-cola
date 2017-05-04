@@ -5,7 +5,7 @@ Releases
 Latest Release
 ==============
 
-:ref:`v2.10 <v2.10>` is the latest stable release.
+:ref:`v2.11 <v2.11>` is the latest stable release.
 
 Development version
 ===================
@@ -16,8 +16,8 @@ Clone the git-cola repo to get the latest development version:
 
 .. _v2.11:
 
-git-cola v2.11 (beta)
-=====================
+git-cola v2.11
+==============
 
 Usability, bells and whistles
 -----------------------------
@@ -107,6 +107,12 @@ Usability, bells and whistles
 * A new `git cola recent` sub-command was added for finding recently
   edited files.
 
+* The `Fetch` dialog now allows pruning remote branches.
+
+  https://github.com/git-cola/git-cola/issues/639
+
+  https://github.com/git-cola/git-cola/pull/680
+
 Fixes
 =====
 * `git cola`'s spellchecker now supports the new `dict-common` filesystem
@@ -129,6 +135,23 @@ Fixes
   be executed with the press of a single enter key after being shown.
 
   https://github.com/git-cola/git-cola/issues/661
+
+* Committing is now allowed in when resolving a merge results in no
+  changes.  This state was previously prevented by the commit message editor,
+  which prevented users from resolving merges that result in no changes.
+
+  https://github.com/git-cola/git-cola/pull/679
+
+* The filesystem monitor would sometimes emit backtraces when directories
+  are modified.  This has been fixed.
+
+  https://bugzilla.redhat.com/show_bug.cgi?id=1438522
+
+* Absolute paths are now returned when querying for `.git`-relative paths
+  from within a submodule, which uses `.git`-files.
+  This fixes launching `git cola` from within a subdirectory of a submodule.
+
+  https://github.com/git-cola/git-cola/pull/675
 
 .. _v2.10:
 
