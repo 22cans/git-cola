@@ -217,8 +217,9 @@ class RepoTreeView(standard.TreeView):
         model.update_entry(path)
 
         for row in range(item.rowCount()):
-            path = item.child(row, 0).path
-            model.update_entry(path)
+            if item.child(row, 0) != None:
+                path = item.child(row, 0).path
+                model.update_entry(path)
 
         item.cached = True
 
@@ -482,7 +483,8 @@ class RepoTreeView(standard.TreeView):
 
     def view_history(self):
         """Launch the configured history browser path-limited to entries."""
-        entries = list(map(ustr, entries))
+        entries = self.selected_tracked_paths()
+        #entries = list(map(ustr, entries))
         cmds.do(cmds.VisualizePaths, entries)
 
     def untrack_selected(self):
